@@ -1,0 +1,433 @@
+# Dockerfile for Railway deployment
+FROM python:3.9-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install TA-Lib (required for technical analysis)
+RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz && \
+    tar -xzf ta-lib-0.4.0-src.tar.gz && \
+    cd ta-lib/ && \
+    ./configure --prefix=/usr && \
+    make && \
+    make install && \
+    cd .. && \
+    rm -rf ta-lib ta-lib-0.4.0-src.tar.gz
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p models logs
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+
+# Expose port for health checks
+EXPOSE 8080
+
+# Command to run the application
+CMD ["python", "deployment/railway_config.py"]
+
+---
+
+# railway.json - Railway deployment configuration
+{
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "Dockerfile"
+  },
+  "deploy": {
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  }
+}
+
+---
+
+# .env.example - Environment variables template
+# Copy this file to .env and fill in your values
+
+# Email Configuration
+SENDER_EMAIL=your-email@gmail.com
+SENDER_PASSWORD=your-app-password
+RECIPIENT_EMAIL=your-email@gmail.com
+
+# Bot Configuration
+CHECK_INTERVAL_MINUTES=5
+CONFIDENCE_THRESHOLD=0.55
+MAX_SIGNALS_PER_HOUR=10
+TIMEFRAMES=5min,15min
+
+# Railway will automatically set these:
+# PORT=8080
+# RAILWAY_ENVIRONMENT=production
+
+---
+
+# .gitignore
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Environment
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Database
+*.db
+*.sqlite3
+crypto_data.db
+
+# Models
+models/*.h5
+models/*.pkl
+
+# Logs
+*.log
+logs/
+
+# Trading data
+trading_signals_*.json
+backtest_results_*.json
+trade_summary_*.csv
+*.png
+training_history.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints
+
+# Railway
+.railway/
+
+---
+
+# Procfile (Alternative to Dockerfile for simple deployments)
+web: python deployment/railway_config.py
+
+---
+
+# railway.toml (Railway v2 configuration)
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+# Environment variables can be set in Railway dashboard
+[env]
+PYTHONPATH = "/app"
+PYTHONUNBUFFERED = "1"
+
+---
+
+# docker-compose.yml (For local development)
+version: '3.8'
+
+services:
+  trading-bot:
+    build: .
+    environment:
+      - SENDER_EMAIL=${SENDER_EMAIL}
+      - SENDER_PASSWORD=${SENDER_PASSWORD}
+      - RECIPIENT_EMAIL=${RECIPIENT_EMAIL}
+      - CHECK_INTERVAL_MINUTES=5
+      - CONFIDENCE_THRESHOLD=0.55
+      - TIMEFRAMES=5min,15min
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+---
+
+# startup.sh (Initialization script)
+#!/bin/bash
+
+echo "🤖 AI Crypto Trading Bot - Startup Script"
+echo "=========================================="
+
+# Create necessary directories
+mkdir -p data models logs
+
+# Check if model exists
+if [ ! -f "models/trading_model.h5" ]; then
+    echo "⚠️  No trained model found!"
+    echo "📊 Running full training pipeline..."
+    
+    # Run full pipeline
+    python main.py full-pipeline --days 365 --epochs 50 --batch-size 32 --backtest-days 30
+else
+    echo "✅ Trained model found"
+    echo "🚀 Starting live monitoring..."
+    
+    # Start live monitoring directly
+    python main.py live
+fi
+
+---
+
+# monitor.sh (Health monitoring script)
+#!/bin/bash
+
+LOG_FILE="logs/health_monitor.log"
+HEALTH_URL="http://localhost:8080/health"
+
+while true; do
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    
+    # Check health endpoint
+    response=$(curl -s -o /dev/null -w "%{http_code}" $HEALTH_URL)
+    
+    if [ "$response" = "200" ]; then
+        echo "[$timestamp] ✅ Bot is healthy" >> $LOG_FILE
+    else
+        echo "[$timestamp] ❌ Bot health check failed (HTTP $response)" >> $LOG_FILE
+        
+        # Send alert email (optional)
+        echo "Trading bot health check failed at $timestamp" | \
+        mail -s "🚨 Trading Bot Alert" $RECIPIENT_EMAIL
+    fi
+    
+    # Wait 5 minutes
+    sleep 300
+done
+
+---
+
+# Railway deployment commands
+# 1. Install Railway CLI: npm install -g @railway/cli
+# 2. Login: railway login
+# 3. Create project: railway new
+# 4. Deploy: railway up
+
+# Environment variables to set in Railway dashboard:
+# SENDER_EMAIL=arianakbari043@gmail.com
+# SENDER_PASSWORD=oaew ptyi krgu edly
+# RECIPIENT_EMAIL=arianakbari043@gmail.com
+# CHECK_INTERVAL_MINUTES=5
+# CONFIDENCE_THRESHOLD=0.55
+# TIMEFRAMES=5min,15min
+
+---
+
+# README.md sections for deployment
+
+## 🚀 Deployment Guide
+
+### Railway Deployment (Recommended)
+
+1. **Prepare Repository**
+   ```bash
+   git clone <your-repo>
+   cd ai-trading-bot
+   ```
+
+2. **Install Railway CLI**
+   ```bash
+   npm install -g @railway/cli
+   railway login
+   ```
+
+3. **Create Railway Project**
+   ```bash
+   railway new
+   # Select "Deploy from GitHub repo"
+   # Connect your repository
+   ```
+
+4. **Set Environment Variables**
+   In Railway dashboard, add:
+   - `SENDER_EMAIL`: arianakbari043@gmail.com
+   - `SENDER_PASSWORD`: oaew ptyi krgu edly
+   - `RECIPIENT_EMAIL`: arianakbari043@gmail.com
+   - `CONFIDENCE_THRESHOLD`: 0.55
+   - `CHECK_INTERVAL_MINUTES`: 5
+
+5. **Deploy**
+   ```bash
+   railway up
+   ```
+
+### Vercel Deployment (Alternative)
+
+1. **Install Vercel CLI**
+   ```bash
+   npm install -g vercel
+   vercel login
+   ```
+
+2. **Deploy**
+   ```bash
+   vercel --prod
+   ```
+
+3. **Set Environment Variables**
+   ```bash
+   vercel env add SENDER_EMAIL
+   vercel env add SENDER_PASSWORD
+   vercel env add RECIPIENT_EMAIL
+   ```
+
+### Local Development
+
+1. **Setup Environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your credentials
+   ```
+
+2. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Run Pipeline**
+   ```bash
+   # Full pipeline (recommended for first run)
+   python main.py full-pipeline
+
+   # Individual steps
+   python main.py collect-data --days 365
+   python main.py train --epochs 100
+   python main.py backtest --backtest-days 30
+   python main.py live
+   ```
+
+### Docker Deployment
+
+1. **Build Image**
+   ```bash
+   docker build -t ai-trading-bot .
+   ```
+
+2. **Run Container**
+   ```bash
+   docker run -d \
+     --name trading-bot \
+     -e SENDER_EMAIL=your-email@gmail.com \
+     -e SENDER_PASSWORD=your-app-password \
+     -e RECIPIENT_EMAIL=your-email@gmail.com \
+     -p 8080:8080 \
+     ai-trading-bot
+   ```
+
+3. **Check Health**
+   ```bash
+   curl http://localhost:8080/health
+   ```
+
+---
+
+# Performance optimization for Railway
+# memory_optimizer.py
+
+import gc
+import psutil
+import logging
+from typing import Dict, Any
+
+logger = logging.getLogger(__name__)
+
+class MemoryOptimizer:
+    """Optimize memory usage for cloud deployment"""
+    
+    @staticmethod
+    def optimize_tensorflow():
+        """Optimize TensorFlow memory usage"""
+        try:
+            import tensorflow as tf
+            
+            # Enable memory growth for GPU (if available)
+            gpus = tf.config.experimental.list_physical_devices('GPU')
+            if gpus:
+                for gpu in gpus:
+                    tf.config.experimental.set_memory_growth(gpu, True)
+            
+            # Set CPU thread limit
+            tf.config.threading.set_intra_op_parallelism_threads(2)
+            tf.config.threading.set_inter_op_parallelism_threads(2)
+            
+            logger.info("TensorFlow memory optimization applied")
+            
+        except Exception as e:
+            logger.warning(f"TensorFlow optimization failed: {e}")
+    
+    @staticmethod
+    def cleanup_memory():
+        """Force garbage collection and memory cleanup"""
+        gc.collect()
+        
+        # Get memory info
+        memory = psutil.virtual_memory()
+        logger.info(f"Memory usage after cleanup: {memory.percent:.1f}%")
+        
+        return memory.percent
+    
+    @staticmethod
+    def get_resource_stats() -> Dict[str, Any]:
+        """Get current resource statistics"""
+        memory = psutil.virtual_memory()
+        cpu_percent = psutil.cpu_percent(interval=1)
+        
+        return {
+            'memory_percent': memory.percent,
+            'memory_available_gb': memory.available / (1024**3),
+            'cpu_percent': cpu_percent,
+            'cpu_count': psutil.cpu_count()
+        }
