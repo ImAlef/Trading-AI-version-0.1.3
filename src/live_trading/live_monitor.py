@@ -40,7 +40,7 @@ class MonitorConfig:
     symbols: List[str]
     timeframes: List[str] = None
     check_interval_minutes: int = 5
-    confidence_threshold: float = 0.55
+    confidence_threshold: float = 0.45
     min_signals_per_hour: int = 1
     max_signals_per_hour: int = 10
     
@@ -460,7 +460,7 @@ def main():
         symbols=symbols,
         timeframes=['5min', '15min'],
         check_interval_minutes=5,
-        confidence_threshold=0.55
+        confidence_threshold=0.45
     )
     
     # Start monitor

@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class TradingSignalModel:
-    def __init__(self, sequence_length: int = 60, confidence_threshold: float = 0.55):
+    def __init__(self, sequence_length: int = 60, confidence_threshold: float = 0.45):
         self.sequence_length = sequence_length
         self.confidence_threshold = confidence_threshold
         self.model = None
@@ -475,7 +475,7 @@ class TradingSignalModel:
 # Example usage
 if __name__ == "__main__":
     # Initialize model
-    model = TradingSignalModel(sequence_length=60, confidence_threshold=0.55)
+    model = TradingSignalModel(sequence_length=60, confidence_threshold=0.45)
     
     # Load training data (this would come from feature engineering)
     # training_data = load_training_data()

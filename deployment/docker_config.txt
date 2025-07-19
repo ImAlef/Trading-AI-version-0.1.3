@@ -69,7 +69,7 @@ RECIPIENT_EMAIL=your-email@gmail.com
 
 # Bot Configuration
 CHECK_INTERVAL_MINUTES=5
-CONFIDENCE_THRESHOLD=0.55
+CONFIDENCE_THRESHOLD=0.45
 MAX_SIGNALS_PER_HOUR=10
 TIMEFRAMES=5min,15min
 
@@ -184,7 +184,7 @@ services:
       - SENDER_PASSWORD=${SENDER_PASSWORD}
       - RECIPIENT_EMAIL=${RECIPIENT_EMAIL}
       - CHECK_INTERVAL_MINUTES=5
-      - CONFIDENCE_THRESHOLD=0.55
+      - CONFIDENCE_THRESHOLD=0.45
       - TIMEFRAMES=5min,15min
     volumes:
       - ./data:/app/data
@@ -261,7 +261,7 @@ done
 # SENDER_PASSWORD=oaew ptyi krgu edly
 # RECIPIENT_EMAIL=arianakbari043@gmail.com
 # CHECK_INTERVAL_MINUTES=5
-# CONFIDENCE_THRESHOLD=0.55
+# CONFIDENCE_THRESHOLD=0.45
 # TIMEFRAMES=5min,15min
 
 ---
@@ -296,7 +296,7 @@ done
    - `SENDER_EMAIL`: arianakbari043@gmail.com
    - `SENDER_PASSWORD`: oaew ptyi krgu edly
    - `RECIPIENT_EMAIL`: arianakbari043@gmail.com
-   - `CONFIDENCE_THRESHOLD`: 0.55
+   - `CONFIDENCE_THRESHOLD`: 0.45
    - `CHECK_INTERVAL_MINUTES`: 5
 
 5. **Deploy**

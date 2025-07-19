@@ -72,7 +72,7 @@ class TradingBotManager:
         
         # Initialize components
         feature_engineer = SimpleFeatureEngineer()
-        model = TradingSignalModel(sequence_length=60, confidence_threshold=0.55)
+        model = TradingSignalModel(sequence_length=60, confidence_threshold=0.45)
         
         # Prepare training data
         logger.info("Preparing training data...")
@@ -115,7 +115,7 @@ class TradingBotManager:
         
         # Initialize components
         feature_engineer = SimpleFeatureEngineer()
-        model = TradingSignalModel(confidence_threshold=0.55)
+        model = TradingSignalModel(confidence_threshold=0.45)
         
         try:
             # Load trained model
@@ -131,7 +131,7 @@ class TradingBotManager:
             leverage=5.0,
             position_size_percentage=0.15,
             commission_rate=0.001,
-            confidence_threshold=0.55,
+            confidence_threshold=0.45,
             start_date=datetime.now() - timedelta(days=days_back),
             end_date=datetime.now()
         )
@@ -191,7 +191,7 @@ class TradingBotManager:
             symbols=self.symbols,
             timeframes=['5min', '15min'],
             check_interval_minutes=5,
-            confidence_threshold=0.55,
+            confidence_threshold=0.45,
             min_signals_per_hour=1,
             max_signals_per_hour=10
         )

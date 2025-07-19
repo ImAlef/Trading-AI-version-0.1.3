@@ -40,7 +40,7 @@ class BacktestConfig:
     position_size_percentage: float = 0.15  # 15% of balance per trade
     commission_rate: float = 0.001  # 0.1% commission
     max_open_positions: int = 5
-    confidence_threshold: float = 0.55
+    confidence_threshold: float = 0.45
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
 
@@ -533,7 +533,7 @@ if __name__ == "__main__":
         initial_balance=10000.0,
         leverage=5.0,
         position_size_percentage=0.15,
-        confidence_threshold=0.55
+        confidence_threshold=0.45
     )
     
     # Initialize backtest engine

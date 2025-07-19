@@ -56,7 +56,7 @@ class ProductionTradingBot:
         
         # Bot configuration
         check_interval = int(os.getenv('CHECK_INTERVAL_MINUTES', '5'))
-        confidence_threshold = float(os.getenv('CONFIDENCE_THRESHOLD', '0.55'))
+        confidence_threshold = float(os.getenv('CONFIDENCE_THRESHOLD', '0.45'))
         max_signals_per_hour = int(os.getenv('MAX_SIGNALS_PER_HOUR', '10'))
         
         # Timeframes - optimized for cloud resources

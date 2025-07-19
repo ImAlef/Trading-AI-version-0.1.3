@@ -8,6 +8,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first (for better Docker caching)
@@ -30,5 +31,5 @@ ENV TF_CPP_MIN_LOG_LEVEL=2
 # Expose port for Railway
 EXPOSE 8080
 
-# Run the Railway startup script
-CMD ["python", "railway_start.py"]
+# Run the pre-trained deployment script
+CMD ["python", "railway_pretrained.py"]
